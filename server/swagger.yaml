@@ -1,0 +1,288 @@
+openapi: 3.0.0
+info:
+  title: Sample API
+  description: Optional multiline or single-line description in [CommonMark](http://commonmark.org/help/) or HTML.
+  version: 0.1.9
+servers:
+  - url: http://localhost:3001
+    description: Optional server description, e.g. Main (production) server
+paths:
+  /users/me:
+    get:
+      security:
+        - bearerAuth: []
+      summary: Get the current user
+      description: Returns the current user data in the database
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                items: 
+                $ref: '#/components/schemas/User'
+  /users/register:              
+     post:
+      summary: Register a new user
+      description: Creates a new user in the database
+      requestBody:
+        description: User object that needs to be added to the database
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          description: Invalid input
+        '500':
+          description: Internal server error  
+  /users/login:              
+     post:
+      summary: Login a user
+      description: username and password is verified to login
+      requestBody:
+        description: User object that needs to be added to the database
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          description: Invalid input
+        '500':
+          description: Internal server error                  
+
+  /products:
+    get:
+      security:
+        - bearerAuth: []
+      summary: Get all products
+      description: Returns a list of all products in the database
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: 
+                $ref: '#/components/schemas/Product'
+        '500':
+          description: Internal server error
+    post:
+      security:
+        - bearerAuth: []
+      summary: Create a new product
+      description: Creates a new product in the database
+      requestBody:
+        description: Product object that needs to be added to the database
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductInput'
+      responses:
+        '201':
+          description: Product created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          description: Invalid input
+        '500':
+          description: Internal server error
+  /products/{productId}:
+    get:
+      summary: Get a product by ID
+      description: Returns a product with the specified ID
+      parameters:
+        - in: path
+          name: productId
+          required: true
+          schema:
+            type: string
+          description: ID of the product to get
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          description: Product not found
+        '500':
+          description: Internal server error
+    put:
+      summary: Update a product by ID
+      description: Updates a product with the specified ID
+      tags : 
+      parameters:
+        - in: path
+          name: productId
+          required: true
+          schema:
+            type: string
+          description: ID of the product to update
+      requestBody:
+        description: Product object that needs to be updated
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductInput'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          description: Invalid input
+        '404':
+          description: Product not found
+        '500':
+          description: Internal server error
+    delete:
+      summary: Delete a product by ID
+      description: Deletes a product with the specified ID
+      parameters:
+        - in: path
+          name: productId
+          required: true
+          schema:
+            type: string
+          description: ID of the product to delete
+      responses:
+        '200':
+          description: Product deleted successfully
+        '404':
+          description: Product not found
+        '500':
+          description: Internal server error
+components:
+  securitySchemes:
+    bearerAuth:           
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Product:
+      type: object
+      properties:
+        _id:
+          type: string
+        productName:
+          type: string
+        description:
+          type: string
+        productImage:
+          type: string
+        price:
+          type: number
+        reviews:
+          type: array
+          items:
+            $ref: '#/components/schemas/Review'
+        owner:
+          type: object
+          items:
+            $ref: '#/components/schemas/User'
+    ProductInput:
+      type: object
+      properties:
+        productName:
+          type: string
+          minLength: 3
+          maxLength: 100
+          example: "Product Name"
+        description:
+          type: string
+          minLength: 10
+          maxLength: 1000
+          example: "Product description"
+        productImage:
+          type: string
+          maxLength: 100
+          example: "example.jpeg"
+        price:
+          type: number
+          minimum: 0
+          example: 9.99
+    Products:
+      type: array
+      items:
+      $ref: '#/components/schemas/Product'
+    Review:
+      type: object
+      properties:
+        _id:
+          type: string
+        review:
+          type: string
+          minLength: 5
+          maxLength: 500
+          example: "This product is great!"
+        rating:
+          type: number
+          minimum: 1
+          maximum: 5
+          example: 4
+        owner:
+          type: string
+          example: "JohnDoe"
+      required:
+        - review
+        - rating
+        - owner  
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+        firstName:
+          type: string
+          minLength: 3
+          maxLength: 100
+          example: "First Name"
+        lastName:
+          type: string
+          minLength: 3
+          maxLength: 100
+          example: "Last Name"
+        email:
+          type: string
+          minLength: 10
+          maxLength: 100
+          example: "Email"
+        password:
+          type: string
+          minLength: 7
+          maxLength: 10
+          example: "Password"
+        picturePath:
+          type: string
+        location:
+          type: string   
+      required:
+        - firstName
+        - lastName
+        - email 
+        - password        
