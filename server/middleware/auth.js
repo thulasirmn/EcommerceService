@@ -1,21 +1,23 @@
 import jwt from "jsonwebtoken";
+import User from "../models/User.js";
 
-export const verifyToken = async(request,response, next)=>{
-    try{
-        let token = request.header("Authorization");
+export const verifyToken = async (req, res, next) => {
+  try {
+    const token = req.header("Authorization").replace("Bearer ", "");
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findOne({
+      _id: decoded._id,
+      "tokens.token": token,
+    });
 
-        if(!token) return response.status(403).send("Access Denied");
-
-        // Bearer is used in authorization tokens to distinguish it from other types of authentication, such as Basic , Digest , and several others.
-
-        if(token.startsWith("Bearer")){
-            token = token.slice(7,token.length).trimLeft();
-        }
-
-        const verified = jwt.verify(token, process.env.JWT_SECRET);
-        request.user = verified;
-        next();
-    }catch(error){
-        response.status(500).json({error:error.message});
+    if (!user) {
+      throw new Error();
     }
-}
+
+    req.token = token;
+    req.user = user;
+    next();
+  } catch (error) {
+    res.status(401).send({ error: "Unauthorized" });
+  }
+};
